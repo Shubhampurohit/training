@@ -15,31 +15,31 @@ exports.signup = async (req, res) => {
         error: false,
         data: userExists,
       });
+    } else {
+      const hash = crypto.createHash("sha1");
+      hash.update(userData.password + process.env.SALT);
+      const hashPassword = hash.digest("hex");
+
+      const newUser = new userModel({
+        name: userData.name,
+        email: userData.email,
+        password: hashPassword,
+        mobile_number: userData.mobile_number,
+        dob: userData.dob,
+        address: userData.address,
+      });
+
+      await newUser.save();
+
+      const token = jwt.sign({ userId: newUser._id }, process.env.SECRET_KEY);
+      res.send({
+        statusCode: 200,
+        message: "User created successfully",
+        error: false,
+        data: newUser,
+        token: token,
+      });
     }
-
-    const hash = crypto.createHash("sha1");
-    hash.update(userData.password + process.env.SALT);
-    const hashPassword = hash.digest("hex");
-
-    const newUser = new userModel({
-      name: userData.name,
-      email: userData.email,
-      password: hashPassword,
-      mobile_number: userData.mobile_number,
-      dob: userData.dob,
-      address: userData.address,
-    });
-
-    await newUser.save();
-
-    const token = jwt.sign({ userId: newUser._id }, process.env.SECRET_KEY);
-    res.send({
-      statusCode: 200,
-      message: "User created successfully",
-      error: false,
-      data: newUser,
-      token: token,
-    });
   } catch (error) {
     res.send({
       statusCode: 400,
